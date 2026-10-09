@@ -16,6 +16,7 @@ import json
 import os
 import re
 import subprocess
+import traceback
 import sys
 import urllib.error
 import urllib.request
@@ -149,7 +150,7 @@ def main():
                        f"🤖 xAI rejected the API key (HTTP {e.code}). Check the `XAI_API_KEY` secret in "
                        "Settings → Secrets and variables → Actions, then re-run the Grok agent workflow."})
                 sys.exit(1)
-            feedback = f"Grok API error: {e}"
+            feedback = f"Grok API error: {e} {e.read().decode(errors='replace')[:500]}"
             print(feedback, flush=True)
             continue
         except Exception as e:
@@ -193,5 +194,28 @@ def main():
         f.write(f"branch={branch}\npr={pr['number']}\n")
 
 
+def report_crash(exc):
+    detail = traceback.format_exc()[-2500:]
+    if isinstance(exc, urllib.error.HTTPError):
+        try:
+            detail += "\nResponse body: " + exc.read().decode(errors="replace")[:1000]
+        except Exception:
+            pass
+    one_line = f"{type(exc).__name__}: {exc}".replace("\n", " ")[:500]
+    print(f"::error title=Grok agent crashed::{one_line}", flush=True)
+    try:
+        num = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text())["issue"]["number"]
+        gh_api("POST", f"repos/{REPO}/issues/{num}/comments",
+               {"body": f"🤖 Grok agent crashed:\n```\n{detail}\n```"})
+    except Exception as e2:
+        print(f"::error title=Could not comment on issue::{e2}", flush=True)
+
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as exc:
+        report_crash(exc)
+        sys.exit(1)
