@@ -71,3 +71,16 @@ jobs:
   deploy:
     needs: merge
     uses: ./.github/workflows/deploy.yml
+
+  close-issue:
+    needs: [fix, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close the issue with a link to the merged PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number || inputs.issue }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/$ISSUE/comments \
+            -f body="🤖 Fixed in #${{ needs.fix.outputs.pr }}, merged and deployed to prod1."
+          gh api -X PATCH repos/${{ github.repository }}/issues/$ISSUE -f state=closed -f state_reason=completed
