@@ -3,17 +3,54 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>About - Seam</title>
+  <meta name="description" content="Seam is open source software that connects any Android phone with a Mac, Windows or Linux computer over your own Wi-Fi.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>About</h1>
-    <nav><a href="index.html">Home</a> <a href="features.html">Features</a> <a href="about.html">About</a></nav>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="index.html">
+        <svg class="logo-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <rect x="3" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="13" y="13" width="16" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Seam</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html">Features</a>
+        <a href="index.html#download">Download</a>
+        <a href="about.html" aria-current="page">About</a>
+        <a href="https://github.com/JohnAI-dev/seam-desktop">GitHub</a>
+      </nav>
+    </div>
   </header>
-  <main>
-    <p>Seam makes your phone and your computer work as one, on Mac, Windows, Linux, Android and iOS.</p>
+
+  <main class="page">
+    <div class="wrap prose">
+      <h1>About</h1>
+      <p class="lede">Seam makes your Android phone and your computer work as one, like Google's phone-and-laptop features, but for any Android phone and any Mac, Windows or Linux computer. Open source.</p>
+      <p>Install Seam on the computer and on the phone, then pair by scanning a QR code with the phone app. There is no cable and no USB debugging. Everything goes over your own Wi-Fi, end-to-end encrypted (TLS with the certificate pinned through the QR code). No cloud, no account.</p>
+      <p>Phone notifications appear on your computer, and you can dismiss them from there. The battery of your phone is shown on the computer. You can mirror and control the phone in a window, built on scrcpy, with nothing extra to install. A shared clipboard is coming. Seam updates itself on the computer and the phone.</p>
+      <h2>Source</h2>
+      <ul>
+        <li><a href="https://github.com/JohnAI-dev/seam-desktop">seam-desktop</a> for Mac, Windows and Linux</li>
+        <li><a href="https://github.com/JohnAI-dev/seam-android">seam-android</a> for the Android app</li>
+      </ul>
+      <p><a class="button" href="index.html#download">Download</a></p>
+    </div>
   </main>
-  <footer><p>&copy; Seam</p></footer>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Seam is open source. Your data stays on your network.</p>
+      <nav aria-label="GitHub">
+        <a href="https://github.com/JohnAI-dev/seam-desktop">seam-desktop</a>
+        <a href="https://github.com/JohnAI-dev/seam-android">seam-android</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>
