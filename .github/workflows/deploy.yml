@@ -1,0 +1,26 @@
+name: Deploy
+# Runs on the self-hosted runner installed on prod1.
+on:
+  push:
+    branches: [main]
+    paths: [site/**]
+  workflow_call:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deploy-prod1
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: [self-hosted, prod1]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Test before deploying
+        run: bash scripts/test.sh
+      - name: Publish to /var/www/seam-web
+        run: rsync -a --delete site/ /var/www/seam-web/
+      - name: Smoke test
+        run: curl -fsS http://localhost/ | grep -q "<title>"
