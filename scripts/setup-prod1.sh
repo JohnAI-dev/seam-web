@@ -21,7 +21,7 @@ elif command -v dnf >/dev/null; then
 elif command -v yum >/dev/null; then
   sudo yum install -y -q epel-release || true; sudo yum install -y -q $PKGS
 elif command -v pacman >/dev/null; then
-  sudo pacman -Sy --noconfirm --needed nginx rsync curl jq tar git python
+  sudo pacman -Sy --noconfirm --needed nginx rsync curl jq tar git python icu krb5 openssl zlib
 elif command -v zypper >/dev/null; then
   sudo zypper -n install $PKGS
 elif command -v apk >/dev/null; then
@@ -48,6 +48,33 @@ server {
 }
 NGINX
 sudo rm -f /etc/nginx/sites-enabled/default
+# Arch (and some others) ship an nginx.conf that never loads conf.d/ and has its own
+# server on port 80. If it is that stock file, replace it (keeping a backup).
+CONF=/etc/nginx/nginx.conf
+if ! grep -qE 'include[[:space:]]+(/etc/nginx/)?(conf\.d|sites-enabled)' "$CONF"; then
+  if grep -qE 'server_name[[:space:]]+localhost' "$CONF"; then
+    sudo cp -n "$CONF" "$CONF.orig"
+    sudo tee "$CONF" >/dev/null <<'MAIN'
+user http;
+worker_processes auto;
+events { worker_connections 1024; }
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+    keepalive_timeout 65;
+    include /etc/nginx/conf.d/*.conf;
+}
+MAIN
+    id http >/dev/null 2>&1 || sudo sed -i 's/^user http;/user nobody;/' "$CONF"
+    echo "replaced stock $CONF (backup at $CONF.orig)"
+  else
+    echo "Your $CONF is customised and does not include conf.d/. Add this line inside its http { } block, then re-run:"
+    echo "    include /etc/nginx/conf.d/*.conf;"
+    exit 1
+  fi
+fi
+sudo chmod 755 /var/www /var/www/seam-web
 sudo nginx -t && sudo systemctl enable --now nginx && sudo systemctl reload nginx
 
 echo "== GitHub Actions runner"

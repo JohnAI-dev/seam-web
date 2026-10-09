@@ -23,4 +23,4 @@ jobs:
       - name: Publish to /var/www/seam-web
         run: rsync -a --delete site/ /var/www/seam-web/
       - name: Smoke test
-        run: curl -fsS http://localhost/ | grep -q "<title>"
+        run: curl -fsS http://localhost/ | cmp - site/index.html
