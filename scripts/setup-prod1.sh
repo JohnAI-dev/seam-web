@@ -10,13 +10,26 @@ RUNNER_USER=github-runner
 RUNNER_DIR=/opt/actions-runner/seam-web
 
 echo "== packages"
-if command -v apt-get >/dev/null; then
-  sudo apt-get update -qq && sudo apt-get install -y -qq nginx rsync curl jq tar git python3
-elif command -v dnf >/dev/null; then
-  sudo dnf install -y -q nginx rsync curl jq tar git python3
-else
-  echo "Unsupported distro: install nginx rsync curl jq git python3 manually"; exit 1
+if [ "$(uname -s)" != "Linux" ]; then
+  echo "This is $(uname -s) on $(hostname), not prod1. Run 'ssh prod1' first, then run this script there."; exit 1
 fi
+PKGS="nginx rsync curl jq tar git python3"
+if command -v apt-get >/dev/null; then
+  sudo apt-get update -qq && sudo apt-get install -y -qq $PKGS
+elif command -v dnf >/dev/null; then
+  sudo dnf install -y -q $PKGS
+elif command -v yum >/dev/null; then
+  sudo yum install -y -q epel-release || true; sudo yum install -y -q $PKGS
+elif command -v pacman >/dev/null; then
+  sudo pacman -Sy --noconfirm --needed nginx rsync curl jq tar git python
+elif command -v zypper >/dev/null; then
+  sudo zypper -n install $PKGS
+elif command -v apk >/dev/null; then
+  echo "Alpine Linux detected: GitHub's runner does not support Alpine (musl). Tell Claude, a different deploy method is needed."; exit 1
+else
+  echo "Unknown Linux:"; cat /etc/os-release 2>/dev/null | head -3; echo "Install $PKGS manually and re-run."; exit 1
+fi
+sudo mkdir -p /etc/nginx/conf.d
 
 echo "== runner user and web root"
 id "$RUNNER_USER" >/dev/null 2>&1 || sudo useradd --system --create-home --shell /bin/bash "$RUNNER_USER"
