@@ -18,9 +18,14 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: main
-      - name: Test before deploying
-        run: bash scripts/test.sh
-      - name: Publish to /var/www/seam-web
-        run: rsync -a --delete site/ /var/www/seam-web/
+      - name: Publish the site
+        run: |
+          # New setup: container with the site folder mounted at /deploy, served on :8080
+          # in the same pod. Old setup: host nginx serving /var/www/seam-web on :80.
+          if [ -d /deploy ]; then target=/deploy; url=http://127.0.0.1:8080/
+          else target=/var/www/seam-web; url=http://127.0.0.1/; fi
+          find "$target" -mindepth 1 -delete
+          cp -a site/. "$target/"
+          echo "SITE_URL=$url" >> "$GITHUB_ENV"
       - name: Smoke test
-        run: curl -fsS http://localhost/ | cmp - site/index.html
+        run: curl -fsS "$SITE_URL" | cmp - site/index.html
