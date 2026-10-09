@@ -17,6 +17,7 @@ import os
 import re
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -142,6 +143,15 @@ def main():
             plan = grok(ENGINEER, prompt)
             summary = plan.get("summary", "")
             touched = apply_changes(plan.get("changes", []))
+        except urllib.error.HTTPError as e:
+            if e.code in (401, 403):
+                gh_api("POST", f"repos/{REPO}/issues/{num}/comments", {"body":
+                       f"🤖 xAI rejected the API key (HTTP {e.code}). Check the `XAI_API_KEY` secret in "
+                       "Settings → Secrets and variables → Actions, then re-run the Grok agent workflow."})
+                sys.exit(1)
+            feedback = f"Grok API error: {e}"
+            print(feedback, flush=True)
+            continue
         except Exception as e:
             feedback = f"Your response could not be applied: {e}"
             print(feedback, flush=True)
