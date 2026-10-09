@@ -13,6 +13,8 @@
 #   - Cloudflare Tunnel points seamweb.no at http://localhost:8081
 #   - nginx, the old runner service, its user and /var/www/seam-web are removed from the host
 set -euo pipefail
+# Commands run as the 'seam' user, who can't enter your home folder; work from / instead.
+cd /
 : "${RUNNER_TOKEN:?set RUNNER_TOKEN first (Settings → Actions → Runners → New self-hosted runner)}"
 
 SEAM_USER=seam
