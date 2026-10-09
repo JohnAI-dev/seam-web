@@ -3,17 +3,156 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Seam</title>
+  <meta name="color-scheme" content="light dark">
+  <title>Seam - your phone and computer, as one</title>
+  <meta name="description" content="Seam makes your Android phone and your computer work as one. Open source, on your own Wi-Fi, with no cloud and no account.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Seam</h1>
-    <nav><a href="index.html">Home</a> <a href="features.html">Features</a> <a href="about.html">About</a></nav>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="index.html">
+        <svg class="logo-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <rect x="3" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="13" y="13" width="16" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Seam</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="index.html" aria-current="page">Home</a>
+        <a href="features.html">Features</a>
+        <a href="index.html#download">Download</a>
+        <a href="about.html">About</a>
+        <a href="https://github.com/JohnAI-dev/seam-desktop">GitHub</a>
+      </nav>
+    </div>
   </header>
+
   <main>
-    <p>Welcome. This site is built, tested, reviewed and deployed automatically.</p>
+    <section class="hero">
+      <div class="wrap">
+        <p class="eyebrow">Open source</p>
+        <h1>Your Android phone and your computer, as one.</h1>
+        <p class="lede">Seam makes your Android phone and your computer work as one, like Google's phone-and-laptop features, but for any Android phone and any Mac, Windows or Linux computer. Open source.</p>
+        <div class="hero-actions">
+          <a class="button" id="hero-download" href="#download">Download</a>
+          <a class="button button-secondary" href="features.html">See features</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how">
+      <div class="wrap">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li>
+            <span class="step-num">1</span>
+            <h3>Install on your computer</h3>
+            <p>Download Seam for Mac, Windows or Linux and open it. It shows a QR code.</p>
+          </li>
+          <li>
+            <span class="step-num">2</span>
+            <h3>Install on your phone</h3>
+            <p>Download the Android app and open the .apk. Allow installing from your browser.</p>
+          </li>
+          <li>
+            <span class="step-num">3</span>
+            <h3>Scan the QR code</h3>
+            <p>Scan the code with the phone app. No cable, no USB debugging. You are paired.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="wrap">
+        <h2>Features</h2>
+        <div class="grid">
+          <article class="card">
+            <h3>Notifications</h3>
+            <p>Phone notifications on your computer, and dismiss them from there.</p>
+          </article>
+          <article class="card">
+            <h3>Battery</h3>
+            <p>The battery of your phone, shown on the computer.</p>
+          </article>
+          <article class="card">
+            <h3>Mirror and control</h3>
+            <p>Mirror and control your phone in a window on the computer. Built on scrcpy, nothing extra to install.</p>
+          </article>
+          <article class="card">
+            <h3>Clipboard</h3>
+            <p>Clipboard shared between phone and computer. Coming.</p>
+          </article>
+          <article class="card">
+            <h3>Private pairing</h3>
+            <p>No cable, no USB debugging. Pair by scanning a QR code. Everything goes over your own Wi-Fi, end-to-end encrypted. No cloud, no account.</p>
+          </article>
+          <article class="card">
+            <h3>Updates itself</h3>
+            <p>Seam updates itself on the computer and on the phone.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="privacy">
+      <div class="wrap">
+        <h2>Your data never leaves your network</h2>
+        <p class="lede">Pair by scanning a QR code with the phone app. Everything goes over your own Wi-Fi, end-to-end encrypted (TLS with the certificate pinned through the QR code). No cloud, no account.</p>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="wrap">
+        <h2>Download</h2>
+        <p class="lede">Latest releases for your computer and the Android app for your phone.</p>
+        <div class="download-grid">
+          <article class="card download-card" id="card-mac" data-platform="mac">
+            <p class="badge">Your platform</p>
+            <h3>Mac (Apple Silicon)</h3>
+            <p class="version" id="version-mac">Latest release</p>
+            <a class="button" id="link-dmg" href="https://github.com/JohnAI-dev/seam-desktop/releases/latest">Download .dmg</a>
+            <p class="note">Open the .dmg and drag Seam to Applications. If macOS says the app is damaged, run <code>xattr -cr /Applications/Seam.app</code> in Terminal (the app is not notarized yet).</p>
+          </article>
+          <article class="card download-card" id="card-windows" data-platform="windows">
+            <p class="badge">Your platform</p>
+            <h3>Windows</h3>
+            <p class="version" id="version-windows">Latest release</p>
+            <a class="button" id="link-exe" href="https://github.com/JohnAI-dev/seam-desktop/releases/latest">Download setup.exe</a>
+            <p class="note">If SmartScreen warns, choose "More info" &rarr; "Run anyway".</p>
+          </article>
+          <article class="card download-card" id="card-linux" data-platform="linux">
+            <p class="badge">Your platform</p>
+            <h3>Linux (AppImage and .deb)</h3>
+            <p class="version" id="version-linux">Latest release</p>
+            <div class="actions">
+              <a class="button" id="link-appimage" href="https://github.com/JohnAI-dev/seam-desktop/releases/latest">Download AppImage</a>
+              <a class="button button-secondary" id="link-deb" href="https://github.com/JohnAI-dev/seam-desktop/releases/latest">Download .deb</a>
+            </div>
+            <p class="note">Mark the AppImage as executable and run it, or install the .deb package.</p>
+          </article>
+          <article class="card download-card" id="card-android" data-platform="android">
+            <p class="badge">Your platform</p>
+            <h3>Android (.apk)</h3>
+            <p class="version" id="version-android">Latest release</p>
+            <a class="button" id="link-apk" href="https://github.com/JohnAI-dev/seam-android/releases/latest">Download .apk</a>
+            <p class="note">Open the .apk on the phone and allow installing from your browser.</p>
+          </article>
+        </div>
+      </div>
+    </section>
   </main>
-  <footer><p>&copy; Seam</p></footer>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Seam is open source. Your data stays on your network.</p>
+      <nav aria-label="GitHub">
+        <a href="https://github.com/JohnAI-dev/seam-desktop">seam-desktop</a>
+        <a href="https://github.com/JohnAI-dev/seam-android">seam-android</a>
+      </nav>
+    </div>
+  </footer>
+  <script src="download.js"></script>
 </body>
 </html>

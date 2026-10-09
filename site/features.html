@@ -3,22 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
   <title>Features - Seam</title>
+  <meta name="description" content="Notifications, battery, phone mirror and control, and private pairing over your own Wi-Fi.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>Features</h1>
-    <nav><a href="index.html">Home</a> <a href="features.html">Features</a> <a href="about.html">About</a></nav>
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="logo" href="index.html">
+        <svg class="logo-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+          <rect x="3" y="6" width="17" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+          <rect x="13" y="13" width="16" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+        <span>Seam</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="index.html">Home</a>
+        <a href="features.html" aria-current="page">Features</a>
+        <a href="index.html#download">Download</a>
+        <a href="about.html">About</a>
+        <a href="https://github.com/JohnAI-dev/seam-desktop">GitHub</a>
+      </nav>
+    </div>
   </header>
-  <main>
-    <ul>
-      <li>Mirror your phone's apps in a window on your computer</li>
-      <li>Receive files from your phone via Quick Share</li>
-      <li>Sync notifications and the clipboard between phone and computer</li>
-      <li>Ask Gemini about anything on screen with a hotkey</li>
-    </ul>
+
+  <main class="page">
+    <div class="wrap">
+      <h1>Features</h1>
+      <p class="lede">Seam makes your Android phone and your computer work as one, for any Android phone and any Mac, Windows or Linux computer. Open source.</p>
+      <div class="stack">
+        <article class="card">
+          <h2>Phone notifications on your computer</h2>
+          <p>Notifications from your phone show up on your computer, and you can dismiss them from there.</p>
+        </article>
+        <article class="card">
+          <h2>Battery</h2>
+          <p>The battery of your phone is shown on the computer.</p>
+        </article>
+        <article class="card">
+          <h2>Mirror and control</h2>
+          <p>Mirror and control your phone in a window on the computer. Built on scrcpy, nothing extra to install.</p>
+        </article>
+        <article class="card">
+          <h2>Clipboard</h2>
+          <p>A clipboard shared between phone and computer is coming.</p>
+        </article>
+        <article class="card">
+          <h2>Pairing</h2>
+          <p>No cable, no USB debugging: pair by scanning a QR code with the phone app. Everything goes over your own Wi-Fi, end-to-end encrypted (TLS with the certificate pinned through the QR code). No cloud, no account.</p>
+        </article>
+        <article class="card">
+          <h2>Updates itself</h2>
+          <p>Seam updates itself on the computer and the phone.</p>
+        </article>
+      </div>
+      <p><a class="button" href="index.html#download">Download</a></p>
+    </div>
   </main>
-  <footer><p>&copy; Seam</p></footer>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Seam is open source. Your data stays on your network.</p>
+      <nav aria-label="GitHub">
+        <a href="https://github.com/JohnAI-dev/seam-desktop">seam-desktop</a>
+        <a href="https://github.com/JohnAI-dev/seam-android">seam-android</a>
+      </nav>
+    </div>
+  </footer>
 </body>
 </html>
