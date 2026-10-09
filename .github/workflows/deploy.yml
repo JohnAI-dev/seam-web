@@ -1,7 +1,7 @@
 name: Deploy
 # Pull-based: nothing connects to prod1. After the tests pass, this moves the `live`
-# branch to the tested commit; a container on prod1 fetches `live` every minute and
-# publishes it (see scripts/prod1-migrate.sh).
+# branch to the tested commit; the seamweb VM on prod1 fetches `live` every minute and
+# publishes it.
 on:
   push:
     branches: [main]
