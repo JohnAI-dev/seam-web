@@ -1,5 +1,7 @@
 name: Deploy
-# Runs on the self-hosted runner installed on prod1.
+# Pull-based: nothing connects to prod1. After the tests pass, this moves the `live`
+# branch to the tested commit; a container on prod1 fetches `live` every minute and
+# publishes it (see scripts/prod1-migrate.sh).
 on:
   push:
     branches: [main]
@@ -7,25 +9,29 @@ on:
   workflow_call:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
-  group: deploy-prod1
+  group: deploy
   cancel-in-progress: false
 jobs:
   deploy:
-    runs-on: [self-hosted, prod1]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
         with:
           ref: main
-      - name: Publish the site
+      - name: Test
+        run: bash scripts/test.sh
+      - name: Move `live` to this commit
+        run: git push --force origin HEAD:refs/heads/live
+      - name: Wait until the site serves this version
+        # Set the repository variable SITE_URL (e.g. https://seamweb.no/) to enable.
+        if: vars.SITE_URL != ''
         run: |
-          # New setup: container with the site folder mounted at /deploy, served on :8080
-          # in the same pod. Old setup: host nginx serving /var/www/seam-web on :80.
-          if [ -d /deploy ]; then target=/deploy; url=http://127.0.0.1:8080/
-          else target=/var/www/seam-web; url=http://127.0.0.1/; fi
-          find "$target" -mindepth 1 -delete
-          cp -a site/. "$target/"
-          echo "SITE_URL=$url" >> "$GITHUB_ENV"
-      - name: Smoke test
-        run: curl -fsS "$SITE_URL" | cmp - site/index.html
+          for i in $(seq 1 30); do
+            if curl -fsS -H "Cache-Control: no-cache" "${{ vars.SITE_URL }}?v=$GITHUB_SHA" | cmp -s - site/index.html; then
+              echo "live at ${{ vars.SITE_URL }}"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::the site did not update within 5 minutes"; exit 1

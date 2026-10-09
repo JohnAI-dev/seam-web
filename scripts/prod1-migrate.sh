@@ -3,24 +3,25 @@
 # first setup script put directly on the host.
 #
 # Run on prod1 as a user with sudo:
-#   RUNNER_TOKEN=<token from github.com/JohnAI-dev/seam-web/settings/actions/runners/new> bash prod1-migrate.sh
+#   bash prod1-migrate.sh
+# Safe to re-run; it converges to the setup below.
 #
 # Result:
 #   - user "seam" (no password, no sudo) owns everything below
-#   - one rootless Podman pod "seam-web" with two containers sharing localhost:
+#   - one rootless Podman pod "seam-web" with two containers:
 #       web:    unprivileged nginx serving the site, published ONLY on 127.0.0.1:8081
-#       runner: GitHub Actions runner that can write the site folder and nothing else on prod1
+#       puller: every minute downloads the tested `live` branch of the public repo and
+#               publishes it. Nothing ever connects TO prod1; it can only write the site folder.
 #   - Cloudflare Tunnel points seamweb.no at http://localhost:8081
 #   - nginx, the old runner service, its user and /var/www/seam-web are removed from the host
 set -euo pipefail
 # Commands run as the 'seam' user, who can't enter your home folder; work from / instead.
 cd /
-: "${RUNNER_TOKEN:?set RUNNER_TOKEN first (Settings → Actions → Runners → New self-hosted runner)}"
 
 SEAM_USER=seam
 REPO_URL=https://github.com/JohnAI-dev/seam-web
 WEB_IMAGE=docker.io/nginxinc/nginx-unprivileged:stable-alpine
-RUNNER_IMAGE=docker.io/myoung34/github-runner:ubuntu-noble
+PULLER_IMAGE=docker.io/library/alpine:3
 
 say() { echo; echo "== $*"; }
 
@@ -39,7 +40,7 @@ for _ in $(seq 1 20); do [ -d "/run/user/$SEAM_UID" ] && break; sleep 0.5; done
 as_seam() { sudo -u "$SEAM_USER" XDG_RUNTIME_DIR="/run/user/$SEAM_UID" DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$SEAM_UID/bus" "$@"; }
 
 say "3/5 Site folder and container definitions"
-as_seam mkdir -p "$SEAM_HOME/site" "$SEAM_HOME/runner" "$SEAM_HOME/.config/containers/systemd"
+as_seam mkdir -p "$SEAM_HOME/site" "$SEAM_HOME/.config/containers/systemd"
 # Keep the site online during the move: start from what is deployed today.
 if [ -d /var/www/seam-web ] && [ -z "$(ls -A "$SEAM_HOME/site" 2>/dev/null)" ]; then
   sudo cp -a /var/www/seam-web/. "$SEAM_HOME/site/"
@@ -73,29 +74,41 @@ Restart=always
 [Install]
 WantedBy=default.target
 EOF
-as_seam tee "$SEAM_HOME/runner/env" >/dev/null <<EOF
-REPO_URL=$REPO_URL
-RUNNER_TOKEN=$RUNNER_TOKEN
-RUNNER_NAME=prod1-seam-web
-LABELS=prod1
-RUNNER_SCOPE=repo
-DISABLE_AUTO_UPDATE=true
-# Keep the registration across restarts (the RUNNER_TOKEN is single-use and expires),
-# and don't deregister when the container stops.
-CONFIGURED_ACTIONS_RUNNER_FILES_DIR=/runner-state
-DISABLE_AUTOMATIC_DEREGISTRATION=true
-EOF
-as_seam chmod 600 "$SEAM_HOME/runner/env"
-as_seam tee "$Q/seam-web-runner.container" >/dev/null <<EOF
+as_seam tee "$SEAM_HOME/puller.sh" >/dev/null <<'PULLER'
+#!/bin/sh
+# Publish the tested `live` branch of seam-web. Keeps the current site if anything fails.
+URL=https://codeload.github.com/JohnAI-dev/seam-web/tar.gz/refs/heads/live
+while true; do
+  tmp=$(mktemp -d)
+  if wget -q -T 30 -O "$tmp/live.tgz" "$URL" && tar -xzf "$tmp/live.tgz" -C "$tmp"; then
+    new=$(ls -d "$tmp"/*/site 2>/dev/null | head -1)
+    if [ -n "$new" ] && [ -f "$new/index.html" ]; then
+      if ! diff -r -q "$new" /site >/dev/null 2>&1; then
+        find /site -mindepth 1 -delete && cp -a "$new"/. /site/ && echo "$(date -u) published new version"
+      fi
+    else
+      echo "$(date -u) download has no site/index.html; keeping current site"
+    fi
+  else
+    echo "$(date -u) could not fetch the live branch (repo private or branch missing?); keeping current site"
+  fi
+  rm -rf "$tmp"
+  sleep 60
+done
+PULLER
+as_seam tee "$Q/seam-web-puller.container" >/dev/null <<UNIT
 [Unit]
-Description=GitHub Actions runner for seam-web (can only write the site folder)
+Description=Publishes the tested live branch of seam-web
 
 [Container]
-Image=$RUNNER_IMAGE
+Image=$PULLER_IMAGE
 Pod=seam-web.pod
-EnvironmentFile=$SEAM_HOME/runner/env
-Volume=$SEAM_HOME/site:/deploy:Z
-Volume=seam-runner-state:/runner-state:Z
+Exec=sh /puller.sh
+Volume=$SEAM_HOME/puller.sh:/puller.sh:ro,Z
+Volume=$SEAM_HOME/site:/site:Z
+ReadOnly=true
+Tmpfs=/tmp
+DropCapability=ALL
 NoNewPrivileges=true
 
 [Service]
@@ -103,12 +116,20 @@ Restart=always
 
 [Install]
 WantedBy=default.target
-EOF
+UNIT
+# Remove the earlier runner container, if this prod1 had one.
+if [ -f "$Q/seam-web-runner.container" ]; then
+  as_seam systemctl --user stop seam-web-runner.service 2>/dev/null || true
+  as_seam rm -f "$Q/seam-web-runner.container"
+  as_seam podman volume rm -f seam-runner-state >/dev/null 2>&1 || true
+  echo "removed the runner container (also delete 'prod1-seam-web' under Settings → Actions → Runners)"
+fi
+as_seam rm -rf "$SEAM_HOME/runner"
 
 say "4/5 Start the containers"
-as_seam podman pull -q "$WEB_IMAGE" "$RUNNER_IMAGE" >/dev/null
+as_seam podman pull -q "$WEB_IMAGE" "$PULLER_IMAGE" >/dev/null
 as_seam systemctl --user daemon-reload
-as_seam systemctl --user start seam-web-pod.service
+as_seam systemctl --user restart seam-web-pod.service
 for _ in $(seq 1 30); do curl -fsS -o /dev/null http://127.0.0.1:8081/ && break; sleep 1; done
 curl -fsS http://127.0.0.1:8081/ | grep -q "<title>" \
   && echo "site container answers on 127.0.0.1:8081" \
