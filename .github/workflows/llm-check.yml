@@ -30,12 +30,17 @@ jobs:
           for provider, name, model in ga.ENGINEERS:
               if not ga._KEYS[provider]:
                   print(f"::warning title={name}::no API key, skipped"); continue
+              m = model
               try:
                   m = ga.resolve_model(model)
                   ans = ga.llm(provider, 'Reply with ONLY {"ok": true}', "ping", model)
                   print(f"{name} ({m}): {ans}")
                   if ans.get("ok") is not True: raise ValueError(ans)
               except Exception as e:
-                  ok = False; print(f"::error title={name} failed::{type(e).__name__}: {e}")
+                  body = ""
+                  if hasattr(e, "read"):
+                      try: body = e.read().decode(errors="replace")[:500]
+                      except Exception: pass
+                  ok = False; print(f"::error title={name} failed ({m if 'm' in dir() else model})::{type(e).__name__}: {e} {body}")
           sys.exit(0 if ok else 1)
           PY
