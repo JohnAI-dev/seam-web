@@ -11,7 +11,7 @@ SITE = Path(__file__).resolve().parent.parent / "site"
 class Page(HTMLParser):
     def __init__(self):
         super().__init__()
-        self.refs, self.has_title, self.lang = [], False, False
+        self.refs, self.has_title, self.lang, self.csp = [], False, False, ""
 
     def handle_starttag(self, tag, attrs):
         a = dict(attrs)
@@ -19,6 +19,8 @@ class Page(HTMLParser):
             self.has_title = True
         if tag == "html" and a.get("lang"):
             self.lang = True
+        if tag == "meta" and (a.get("http-equiv") or "").lower() == "content-security-policy":
+            self.csp = a.get("content") or ""
         for key in ("href", "src"):
             if a.get(key):
                 self.refs.append(a[key])
@@ -36,6 +38,10 @@ for page in pages:
         errors.append(f"{rel}: missing <title>")
     if not p.lang:
         errors.append(f"{rel}: <html> missing lang attribute")
+    # Every page keeps a strict Content-Security-Policy: no inline scripts, nothing from other sites
+    # except the GitHub API (download links).
+    if "default-src 'none'" not in p.csp or "'unsafe-inline'" in p.csp or "script-src 'self'" not in p.csp:
+        errors.append(f"{rel}: missing or weakened Content-Security-Policy meta tag")
     for ref in p.refs:
         u = urlparse(ref)
         if u.scheme or ref.startswith(("#", "mailto:", "//")):
