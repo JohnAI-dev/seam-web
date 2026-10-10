@@ -1,0 +1,41 @@
+name: Engineer check
+# Manual check that every engineer the agent can escalate to answers (Grok, and Claude/OpenAI
+# via OpenRouter). Run it after changing API keys or model settings.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/agent
+      - name: Ask each engineer for a tiny JSON answer
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          XAI_MODEL: ${{ vars.XAI_MODEL }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}
+          GH_TOKEN: none
+        run: |
+          python3 - <<'PY'
+          import importlib.util, sys
+          spec = importlib.util.spec_from_file_location("ga", ".github/agent/grok_agent.py")
+          ga = importlib.util.module_from_spec(spec); spec.loader.exec_module(ga)
+          ok = True
+          for provider, name, model in ga.ENGINEERS:
+              if not ga._KEYS[provider]:
+                  print(f"::warning title={name}::no API key, skipped"); continue
+              try:
+                  m = ga.resolve_model(model)
+                  ans = ga.llm(provider, 'Reply with ONLY {"ok": true}', "ping", model)
+                  print(f"{name} ({m}): {ans}")
+                  if ans.get("ok") is not True: raise ValueError(ans)
+              except Exception as e:
+                  ok = False; print(f"::error title={name} failed::{type(e).__name__}: {e}")
+          sys.exit(0 if ok else 1)
+          PY
