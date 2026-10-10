@@ -9,8 +9,8 @@ The Seam website. Static site in `site/`, built, fixed, reviewed and deployed au
 3. **Grok reviewer**, a separate call that only sees the issue, the diff and the test output, approves or rejects. Up to 3 attempts, with feedback fed back each time.
 4. A PR is opened, **CI re-runs the tests** on a clean machine, and the PR is **squash-merged automatically**.
 5. **Deploy** is pull-based: CI moves the `live` branch to the tested commit, and the seamweb
-   QEMU VM on prod1 fetches it and serves it; Cloudflare Tunnel publishes it as https://seamweb.no.
-   Nothing connects in to prod1.
+   web server (an isolated VM) fetches it and serves it; Cloudflare Tunnel publishes it as https://seamweb.no.
+   Nothing connects in to the server.
 
 If the agent can't get an approved, passing fix, it comments on the issue instead.
 
@@ -25,4 +25,4 @@ If the agent can't get an approved, passing fix, it comments on the issue instea
 
 - Secret `XAI_API_KEY`: your xAI API key.
 - Variable `XAI_MODEL` (optional): defaults to `grok-4.7`.
-- Hosting: the seamweb VM on prod1 (`~/vms/seamweb-112`).
+- Hosting: an isolated VM that pulls the `live` branch; published through Cloudflare Tunnel.

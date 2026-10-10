@@ -1,6 +1,6 @@
 name: Deploy
-# Pull-based: nothing connects to prod1. After the tests pass, this moves the `live`
-# branch to the tested commit; the seamweb VM on prod1 fetches `live` every minute and
+# Pull-based: nothing connects in to the server. After the tests pass, this moves the `live`
+# branch to the tested commit; the web server fetches `live` every minute and
 # publishes it.
 on:
   push:

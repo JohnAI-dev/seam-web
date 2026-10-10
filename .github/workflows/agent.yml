@@ -140,7 +140,7 @@ jobs:
           ISSUE: ${{ needs.pick.outputs.issue }}
         run: |
           gh api repos/${{ github.repository }}/issues/$ISSUE/comments \
-            -f body="🤖 Fixed in #${{ needs.fix.outputs.pr }}, merged and deployed to prod1."
+            -f body="🤖 Fixed in #${{ needs.fix.outputs.pr }}, merged and deployed."
           gh api -X PATCH repos/${{ github.repository }}/issues/$ISSUE -f state=closed -f state_reason=completed
 
   next:
