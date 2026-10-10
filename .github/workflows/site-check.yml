@@ -1,0 +1,40 @@
+name: Live site check
+# Checks https://seamweb.no from the outside every day: it is up, serves the current
+# site, does not expose anything but the site, and sends sensible security headers.
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe the live site
+        env:
+          SITE: ${{ vars.SITE_URL || 'https://seamweb.no/' }}
+        run: |
+          set -u
+          base="${SITE%/}"
+          fail=0
+          code() { curl -s -o /dev/null -m 20 -w "%{http_code}" "$1"; }
+          [ "$(code "$base/")" = 200 ] || { echo "::error title=Site down::$base/ did not return 200"; fail=1; }
+          # Nothing outside site/ may be reachable.
+          for p in /.git/config /.git/HEAD /.github/workflows/agent.yml /.github/agent/grok_agent.py \
+                   /scripts/test.sh /scripts/check_site.py /README.md /site/index.html /.env /.htaccess \
+                   /server-status /nginx.conf /puller.sh; do
+            c=$(code "$base$p")
+            if [ "$c" = 200 ]; then echo "::error title=Exposed file::$p returns 200"; fail=1; else echo "ok $p -> $c"; fi
+          done
+          # Plain HTTP must redirect to HTTPS.
+          http=$(curl -s -o /dev/null -m 20 -w "%{http_code} %{redirect_url}" "${base/https:/http:}/")
+          echo "http: $http"
+          case "$http" in 30[178]\ https://*) ;; *) echo "::warning title=No HTTPS redirect::http:// answered '$http'";; esac
+          headers=$(curl -sI -m 20 "$base/" | tr -d '\r')
+          echo "$headers"
+          for h in strict-transport-security content-security-policy x-content-type-options x-frame-options referrer-policy; do
+            echo "$headers" | grep -qi "^$h:" || echo "::warning title=Missing header::$h"
+          done
+          echo "$headers" | grep -iE "^(server|x-powered-by): .*[0-9]" && echo "::warning title=Version disclosed::server/x-powered-by shows a version"
+          exit $fail
